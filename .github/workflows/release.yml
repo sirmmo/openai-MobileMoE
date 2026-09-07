@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - run: ls -l dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    # Publishing jobs are tag-only, so a manual workflow_dispatch run is a safe
+    # dry run: it builds and checks the distributions and stops there.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # Trusted publishing (OIDC) -- no API token secret needed. Configure the
+      # publisher once at https://pypi.org/manage/project/openai-mobilemoe/settings/publishing/
+      # with owner=sirmmo, repo=openai-MobileMoE, workflow=release.yml, environment=pypi.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  container:
+    name: Publish container to GHCR
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # GHCR requires lowercase image names.
+          images: ghcr.io/sirmmo/openai-mobilemoe
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            # `latest` tracks the newest stable tag -- the README tells people to
+            # pull it. Prereleases (v1.0.0-rc1) are excluded.
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+
+      - name: Build and push (CPU, multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: cpu
+          # The PyTorch CPU wheel index ships aarch64 builds, so one Dockerfile
+          # covers x86 servers and ARM boards / Apple-silicon Docker alike.
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - id: meta-cuda
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/sirmmo/openai-mobilemoe
+          flavor: |
+            suffix=-cuda,onlatest=true
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+
+      - name: Build and push (CUDA)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: cuda
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-cuda.outputs.tags }}
+          labels: ${{ steps.meta-cuda.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  github-release:
+    name: GitHub release
+    needs: [build, container]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "See [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md).
+
+          Containers: \`ghcr.io/sirmmo/openai-mobilemoe:${GITHUB_REF_NAME#v}\` (CPU, amd64+arm64) and \`ghcr.io/sirmmo/openai-mobilemoe:${GITHUB_REF_NAME#v}-cuda\`." \
+            dist/*

@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest an addition to the OpenAI surface or the server
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should the server do, and how does it map onto what MobileMoE can actually produce?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

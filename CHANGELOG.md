@@ -1,0 +1,30 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
+to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.0] - 2026-09-07
+
+First release.
+
+### Added
+
+- `POST /v1/chat/completions` with genuine token streaming, `n`, `stop`,
+  `temperature`, `top_p`, `seed`, `max_tokens` / `max_completion_tokens`, and
+  the non-standard `top_k` and `repetition_penalty`.
+- `POST /v1/completions` accepting a string, a list of strings, or token
+  arrays, streaming included.
+- `GET /v1/models`, `GET /v1/models/{id}`, `GET /health`, `GET /`.
+- Exact `usage` counts from the model's own tokenizer.
+- `x_mobilemoe` extension block with timings and a list of accepted-but-ignored
+  parameters.
+- Serve any of the nine `facebook/MobileMoE-{S,M,L}-{Base,SFT,QAT}` checkpoints
+  through `MOBILEMOE_MODEL`; base checkpoints serve `/v1/completions` only.
+- CPU (amd64 + arm64) and CUDA container images, `docker-compose.yml`,
+  optional bearer-token auth, CORS.
+- Offline unit suite through a fake engine and a live suite that runs against a
+  container in CI, using an ungated stand-in model when no `HF_TOKEN` secret is
+  configured.

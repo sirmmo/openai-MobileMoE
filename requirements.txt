@@ -1,0 +1,10 @@
+# Runtime dependencies for the server. The Dockerfile installs torch from the
+# CPU wheel index before this file so the default image stays CPU-only.
+torch>=2.1
+transformers>=4.57
+safetensors>=0.4
+accelerate>=1.0
+huggingface_hub>=0.23
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6

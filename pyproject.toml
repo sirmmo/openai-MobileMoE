@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openai-mobilemoe"
+version = "0.1.0"
+description = "OpenAI-compatible HTTP API for Meta's MobileMoE on-device mixture-of-experts models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = [
+    "openai",
+    "openai-api",
+    "mobilemoe",
+    "mixture-of-experts",
+    "on-device",
+    "llm",
+    "edge-ai",
+    "transformers",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
+
+# torch is resolved from PyPI, which on x86 Linux means the CUDA build. For a
+# CPU-only install (about a quarter of the size) install torch first from the
+# CPU index and then this package:
+#
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
+#     pip install openai-mobilemoe
+dependencies = [
+    "torch>=2.1",
+    "transformers>=4.57",
+    "safetensors>=0.4",
+    "accelerate>=1.0",
+    "huggingface_hub>=0.23",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "httpx>=0.27"]
+
+[project.urls]
+Documentation = "https://ingmmo.com/openai-MobileMoE/"
+Source = "https://github.com/sirmmo/openai-MobileMoE"
+Issues = "https://github.com/sirmmo/openai-MobileMoE/issues"
+Changelog = "https://github.com/sirmmo/openai-MobileMoE/blob/main/CHANGELOG.md"
+Model = "https://huggingface.co/facebook/MobileMoE-S-QAT"
+
+[project.scripts]
+openai-mobilemoe = "openai_mobilemoe.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["openai_mobilemoe*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Put the repo root on sys.path so a bare `pytest` works the same as
+# `python -m pytest` (the latter adds the cwd implicitly, the former does not).
+pythonpath = ["."]
+markers = [
+    "live: requires a running server (set MOBILEMOE_TEST_BASE_URL)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "B008",  # FastAPI's Depends()/Header() defaults are the documented idiom.
+]
+
+[tool.ruff.lint.per-file-ignores]
+# pytest.skip() before imports in the live suite, guarding on the server URL.
+"tests/*" = ["E402"]
+
+[tool.ruff.lint.isort]
+# `fakes` and `conftest` are imported bare -- pytest puts tests/ on sys.path,
+# so they are modules rather than a package.
+known-first-party = ["openai_mobilemoe", "conftest", "fakes"]

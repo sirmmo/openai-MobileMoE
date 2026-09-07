@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check --output-format=github .
+      - run: ruff format --check .
+
+  test:
+    name: Unit tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      # The unit suite drives the HTTP surface through a fake engine. It still
+      # imports the engine module, so torch is needed -- the CPU wheel keeps
+      # that to a few hundred MB.
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r requirements.txt pytest httpx
+      - run: pytest -q -m "not live"
+
+  docker:
+    name: Image build + live tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: cpu
+          load: true
+          tags: openai-mobilemoe:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The MobileMoE repos are gated, so the live suite runs against the real
+      # checkpoint only when the repository has an HF_TOKEN secret whose owner
+      # has accepted the license. Without it, an ungated Llama-3-style chat
+      # model of similar size stands in: same transformers code path, same
+      # OpenAI surface, no license gate.
+      - name: Pick the model to serve
+        id: model
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -n "${HF_TOKEN}" ]; then
+            echo "model=facebook/MobileMoE-S-QAT" >> "$GITHUB_OUTPUT"
+          else
+            echo "model=HuggingFaceTB/SmolLM2-135M-Instruct" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Start server
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          docker run -d --name mobilemoe -p 8000:8000 \
+            -e HF_TOKEN="${HF_TOKEN}" \
+            -e MOBILEMOE_MODEL="${{ steps.model.outputs.model }}" \
+            -e MOBILEMOE_MAX_NEW_TOKENS=64 \
+            openai-mobilemoe:ci
+
+      - name: Wait for the model to load
+        run: |
+          for i in $(seq 1 600); do
+            if curl -sf -m 3 http://127.0.0.1:8000/health | grep -q '"ok"'; then
+              echo "ready after ${i}s"
+              curl -s http://127.0.0.1:8000/health
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::model did not become ready in 600s"
+          docker logs mobilemoe
+          exit 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install pytest httpx openai
+
+      - name: Live tests
+        env:
+          MOBILEMOE_TEST_BASE_URL: http://127.0.0.1:8000
+        # Only the live file is collected: this job installs no server
+        # dependencies, so it talks to the container purely over HTTP.
+        run: pytest tests/test_live.py -m live -q
+
+      - name: Server logs
+        if: always()
+        run: docker logs mobilemoe

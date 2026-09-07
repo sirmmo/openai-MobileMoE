@@ -1,0 +1,67 @@
+site_name: openai-MobileMoE
+site_description: OpenAI-compatible HTTP API for Meta's MobileMoE on-device MoE models
+site_url: https://ingmmo.com/openai-MobileMoE/
+repo_url: https://github.com/sirmmo/openai-MobileMoE
+repo_name: sirmmo/openai-MobileMoE
+edit_uri: edit/main/docs/
+copyright: MIT licensed. MobileMoE is published by Meta under the FAIR Noncommercial Research License.
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - toc.follow
+
+nav:
+  - Overview: index.md
+  - Quickstart: quickstart.md
+  - API reference: api-reference.md
+  - Fidelity notes: fidelity.md
+  - Configuration: configuration.md
+  - Architecture: architecture.md
+  - Development: development.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/sirmmo/openai-MobileMoE

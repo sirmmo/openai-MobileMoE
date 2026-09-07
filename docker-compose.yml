@@ -1,0 +1,39 @@
+services:
+  openai-mobilemoe:
+    build:
+      context: .
+      # Use target `cuda` (and uncomment the deploy block) for a GPU.
+      target: cpu
+    image: openai-mobilemoe:0.1.0
+    ports:
+      - "${MOBILEMOE_PORT:-8000}:8000"
+    environment:
+      # The MobileMoE repos are gated. Accept the FAIR Noncommercial Research
+      # License at https://huggingface.co/facebook/MobileMoE-S-QAT once, then
+      # put a read token here.
+      HF_TOKEN: "${HF_TOKEN:-}"
+      # Any of the nine checkpoints: facebook/MobileMoE-{S,M,L}-{Base,SFT,QAT}
+      MOBILEMOE_MODEL: "${MOBILEMOE_MODEL:-facebook/MobileMoE-S-QAT}"
+      # Optional bearer token. Leave unset to serve unauthenticated.
+      MOBILEMOE_API_KEY: "${MOBILEMOE_API_KEY:-}"
+      MOBILEMOE_MAX_NEW_TOKENS: "${MOBILEMOE_MAX_NEW_TOKENS:-512}"
+      MOBILEMOE_MAX_QUEUE_DEPTH: "${MOBILEMOE_MAX_QUEUE_DEPTH:-16}"
+      MOBILEMOE_DTYPE: "${MOBILEMOE_DTYPE:-auto}"
+      MOBILEMOE_THREADS: "${MOBILEMOE_THREADS:-}"
+    volumes:
+      # Persist downloaded weights across restarts.
+      - mobilemoe-cache:/cache
+    restart: unless-stopped
+    # S-QAT dequantized to float32 is ~5.5GB resident; M needs ~11GB and L
+    # ~21GB at float32, roughly half that with MOBILEMOE_DTYPE=bfloat16.
+    mem_limit: 8g
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  mobilemoe-cache:
