@@ -45,7 +45,7 @@ ENTRYPOINT ["python", "-m", "openai_mobilemoe"]
 # ---- optional: CUDA image ---------------------------------------------------
 # docker build --target cuda -t openai-mobilemoe:cuda .
 # docker run --gpus all -p 8000:8000 -e HF_TOKEN=... openai-mobilemoe:cuda
-FROM pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime AS cuda
+FROM pytorch/pytorch:2.11.0-cuda12.8-cudnn9-runtime AS cuda
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
