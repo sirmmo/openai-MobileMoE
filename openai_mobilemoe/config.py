@@ -96,6 +96,13 @@ class Settings:
     #: greedy decoding, so the default is 0 rather than OpenAI's 1.0.
     default_temperature: float = 0.0
 
+    #: Transformers' multiplicative repetition penalty applied when the request
+    #: omits ``repetition_penalty``. 1.0 = off. Small MobileMoE checkpoints can
+    #: loop on repetitive input (a list of near-identical rows); 1.1 to 1.2 stops
+    #: that for prose, but penalises legitimate repetition in code and queries,
+    #: so it is off unless a deployment serving one fixed client turns it on.
+    default_repetition_penalty: float = 1.0
+
     #: Reject a request outright once this many are already waiting for the
     #: engine. Generation serializes through one thread, so an unbounded queue
     #: just converts load into timeouts.
@@ -138,6 +145,7 @@ class Settings:
             max_new_tokens=_env_int("MOBILEMOE_MAX_NEW_TOKENS", 512) or 512,
             max_context=_env_int("MOBILEMOE_MAX_CONTEXT", None),
             default_temperature=_env_float("MOBILEMOE_DEFAULT_TEMPERATURE", 0.0),
+            default_repetition_penalty=_env_float("MOBILEMOE_DEFAULT_REPETITION_PENALTY", 1.0),
             max_queue_depth=_env_int("MOBILEMOE_MAX_QUEUE_DEPTH", 16) or 16,
             request_timeout=_env_float("MOBILEMOE_REQUEST_TIMEOUT", 600.0),
             expose_extras=_env_bool("MOBILEMOE_EXPOSE_EXTRAS", True),

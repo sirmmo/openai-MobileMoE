@@ -221,7 +221,11 @@ def _number(payload: dict[str, Any], key: str, default: float, lo: float, hi: fl
 
 
 def sampling_params(
-    payload: dict[str, Any], *, default_max_new_tokens: int, default_temperature: float
+    payload: dict[str, Any],
+    *,
+    default_max_new_tokens: int,
+    default_temperature: float,
+    default_repetition_penalty: float = 1.0,
 ) -> GenerationParams:
     """Read OpenAI sampling fields (plus a few common extensions) into engine params."""
     max_tokens = payload.get("max_completion_tokens")
@@ -237,7 +241,9 @@ def sampling_params(
     top_k = payload.get("top_k", 0)
     if isinstance(top_k, bool) or not isinstance(top_k, int) or top_k < 0:
         raise TranslationError("'top_k' must be a non-negative integer", param="top_k")
-    repetition_penalty = _number(payload, "repetition_penalty", 1.0, 0.0, 10.0)
+    repetition_penalty = _number(
+        payload, "repetition_penalty", default_repetition_penalty, 0.0, 10.0
+    )
 
     stop_raw = payload.get("stop")
     if stop_raw is None:

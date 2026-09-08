@@ -160,6 +160,7 @@ def create_app(settings: Settings | None = None, engine: Any = None) -> FastAPI:
             payload,
             default_max_new_tokens=settings.max_new_tokens,
             default_temperature=settings.default_temperature,
+            default_repetition_penalty=settings.default_repetition_penalty,
         )
         requested = payload.get("max_completion_tokens")
         if requested is None:

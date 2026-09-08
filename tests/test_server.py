@@ -164,6 +164,15 @@ def test_tool_role_falls_back_when_the_template_rejects_it(client):
     assert "Tool result (get_weather)" in client.engine.calls[-1]["prompt"]
 
 
+def test_server_default_repetition_penalty(engine):
+    app = create_app(settings=Settings(default_repetition_penalty=1.15), engine=engine)
+    with TestClient(app) as client:
+        chat(client)
+        assert engine.calls[-1]["params"].repetition_penalty == 1.15
+        chat(client, repetition_penalty=1.0)
+        assert engine.calls[-1]["params"].repetition_penalty == 1.0
+
+
 def test_extras_can_be_disabled(engine):
     app = create_app(settings=Settings(expose_extras=False), engine=engine)
     with TestClient(app) as client:

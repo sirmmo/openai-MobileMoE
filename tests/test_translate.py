@@ -185,6 +185,21 @@ def test_choice_count():
         translate.choice_count({"n": 99})
 
 
+def test_default_repetition_penalty_applies_only_when_omitted():
+    kw = {"default_max_new_tokens": 10, "default_temperature": 0.0}
+    assert translate.sampling_params({}, **kw).repetition_penalty == 1.0
+    assert (
+        translate.sampling_params({}, default_repetition_penalty=1.15, **kw).repetition_penalty
+        == 1.15
+    )
+    assert (
+        translate.sampling_params(
+            {"repetition_penalty": 1.0}, default_repetition_penalty=1.15, **kw
+        ).repetition_penalty
+        == 1.0
+    )
+
+
 def test_choice_params_offset_the_seed():
     base = translate.sampling_params({"seed": 5}, default_max_new_tokens=1, default_temperature=1)
     assert translate.choice_params(base, 0) is base

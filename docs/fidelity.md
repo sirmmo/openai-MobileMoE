@@ -68,6 +68,14 @@ produced by another model still makes sense.
 after the chat template is applied, so the template's own tokens count
 against it.
 
+**Repetition loops on list-like input.** Asked to summarise 20 rows in which
+one label appears five times, MobileMoE-M-QAT repeated that label until the
+token cap; with `repetition_penalty: 1.15` it stopped and listed the rows.
+Clients that can send the extension should; deployments serving a fixed
+client that cannot (a chat front-end that only sends `temperature`) can set
+`MOBILEMOE_DEFAULT_REPETITION_PENALTY`. Leave it at 1.0 for code or query
+generation, where repeating tokens is the point.
+
 **Tokenizer space cleanup is off.** The checkpoint's tokenizer sets
 `clean_up_tokenization_spaces=true`, which would rewrite `SELECT ?s ?label` as
 `SELECT?s?label` and `x .` as `x.`. The server decodes with the cleanup

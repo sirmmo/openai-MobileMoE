@@ -35,6 +35,7 @@ markedly slower than `float32`, which is why `auto` picks `float32` there.
 | `MOBILEMOE_MAX_NEW_TOKENS` | `--max-new-tokens` | `512` | Cap when a request omits `max_tokens`. Clamped to the remaining context. |
 | `MOBILEMOE_MAX_CONTEXT` | `--max-context` | from the model (8192) | Override the context window, for example to bound prompt size. |
 | `MOBILEMOE_DEFAULT_TEMPERATURE` | — | `0` | Temperature when a request omits one. `0` = greedy. |
+| `MOBILEMOE_DEFAULT_REPETITION_PENALTY` | `--repetition-penalty` | `1.0` | Applied when a request omits `repetition_penalty`. `1.0` = off. See [fidelity notes](fidelity.md#things-about-the-checkpoints). |
 
 ## Server
 

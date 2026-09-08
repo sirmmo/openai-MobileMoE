@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `MOBILEMOE_DEFAULT_REPETITION_PENALTY` / `--repetition-penalty`: a server-side
+  default for requests that omit `repetition_penalty`, for fixed clients that
+  cannot send the extension. Off (1.0) by default.
+
 ## [0.1.2] - 2026-09-08
 
 ### Fixed

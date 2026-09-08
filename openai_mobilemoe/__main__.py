@@ -42,6 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-context", type=int, default=None, help="override the model's context window"
     )
     parser.add_argument(
+        "--repetition-penalty",
+        type=float,
+        default=None,
+        help="repetition penalty when a request omits one (default 1.0 = off)",
+    )
+    parser.add_argument(
         "--max-queue-depth",
         type=int,
         default=None,
@@ -84,6 +90,7 @@ def main(argv: list[str] | None = None) -> None:
         ("api_key", args.api_key),
         ("max_new_tokens", args.max_new_tokens),
         ("max_context", args.max_context),
+        ("default_repetition_penalty", args.repetition_penalty),
         ("max_queue_depth", args.max_queue_depth),
         ("request_timeout", args.request_timeout),
     ):
