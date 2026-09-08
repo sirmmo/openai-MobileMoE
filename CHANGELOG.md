@@ -6,6 +6,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-08
+
+First use as the answer model behind a tool-calling gateway (aiproxy with a
+needle-openai tool backend and an OntoRAG MCP server).
+
 ### Added
 
 - `MOBILEMOE_TOOL_HISTORY` / `--tool-history` (default `context`): tool

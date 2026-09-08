@@ -4,7 +4,7 @@ services:
       context: .
       # Use target `cuda` (and uncomment the deploy block) for a GPU.
       target: cpu
-    image: openai-mobilemoe:0.1.2
+    image: openai-mobilemoe:0.1.3
     ports:
       - "${MOBILEMOE_PORT:-8000}:8000"
     environment:
