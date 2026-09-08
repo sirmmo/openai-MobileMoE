@@ -8,6 +8,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `MOBILEMOE_TOOL_HISTORY` / `--tool-history` (default `context`): tool
+  exchanges in the history are rendered as plain context, because a transcript
+  with serialized `tool_calls` made the model imitate the JSON instead of
+  answering. Found driving MobileMoE-S-QAT as the answer model behind aiproxy.
 - `MOBILEMOE_DEFAULT_REPETITION_PENALTY` / `--repetition-penalty`: a server-side
   default for requests that omit `repetition_penalty`, for fixed clients that
   cannot send the extension. Off (1.0) by default.

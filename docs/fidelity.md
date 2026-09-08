@@ -57,12 +57,18 @@ context. An explicit `max_tokens` that does not fit is a 400
 language models. Chat requests get 400 `no_chat_template`; use
 `/v1/completions`.
 
-**The `tool` role.** The SFT/QAT chat template is Llama-3 style and may not
-know the `tool` role. Tool messages are first passed through as-is; if the
-template rejects them, they are folded into user turns as *"Tool result
-(name): ..."* and the prompt is rendered again. Assistant turns that carry
-`tool_calls` are rendered with the calls serialized as JSON so a transcript
-produced by another model still makes sense.
+**Tool exchanges in the history.** A gateway that runs the tool loop with a
+different model (aiproxy with a needle-openai tool backend, for instance) sends
+MobileMoE a transcript containing assistant `tool_calls` turns and `tool`
+results, and asks it for the final answer. Shown that transcript verbatim,
+MobileMoE-S-QAT answered with an imitation of the tool-call JSON every time.
+By default (`MOBILEMOE_TOOL_HISTORY=context`) the server therefore drops
+assistant turns that only carry `tool_calls` and renders each tool result as a
+user turn, *"Tool result (name): ..."*, so the retrieved material reads as
+context the user supplied. `template` keeps the old behaviour: the `tool` role
+goes to the chat template (which accepts any role name) and calls are
+serialized as JSON in the assistant turn; if a template rejects the `tool`
+role, results are folded into user turns and the prompt rendered again.
 
 **Context is 8,192 tokens** for every checkpoint. Prompt tokens are counted
 after the chat template is applied, so the template's own tokens count

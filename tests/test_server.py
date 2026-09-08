@@ -151,26 +151,59 @@ def test_n_with_seed_varies_the_seed_per_choice(client):
     assert [c["params"].seed for c in client.engine.calls[-3:]] == [10, 11, 12]
 
 
-def test_tool_role_falls_back_when_the_template_rejects_it(client):
-    client.engine.rejects_tool_role = True
-    response = chat(
+def test_tool_exchanges_are_rendered_as_context_by_default(client):
+    chat(
         client,
         messages=[
             {"role": "user", "content": "weather?"},
-            {"role": "tool", "content": "sunny", "name": "get_weather"},
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{"id": "c1", "function": {"name": "get_weather"}}],
+            },
+            {"role": "tool", "tool_call_id": "c1", "content": "sunny", "name": "get_weather"},
         ],
     )
-    assert response.status_code == 200, response.text
-    assert "Tool result (get_weather)" in client.engine.calls[-1]["prompt"]
+    prompt = client.engine.calls[-1]["prompt"]
+    assert (
+        "<|user|>Tool result (get_weather): sunny<|end|>" in prompt
+    )  # fake tokenizer folds the newline
+    assert prompt.count("<|assistant|>") == 1  # only the generation prompt
+    assert "tool_calls" not in prompt and "c1" not in prompt
 
 
-def test_server_default_repetition_penalty(engine):
-    app = create_app(settings=Settings(default_repetition_penalty=1.15), engine=engine)
+def test_tool_history_template_mode_passes_the_tool_role(engine):
+    app = create_app(settings=Settings(tool_history="template"), engine=engine)
     with TestClient(app) as client:
-        chat(client)
-        assert engine.calls[-1]["params"].repetition_penalty == 1.15
-        chat(client, repetition_penalty=1.0)
-        assert engine.calls[-1]["params"].repetition_penalty == 1.0
+        chat(
+            client,
+            messages=[
+                {"role": "user", "content": "weather?"},
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [{"id": "c1", "function": {"name": "w"}}],
+                },
+                {"role": "tool", "tool_call_id": "c1", "content": "sunny", "name": "w"},
+            ],
+        )
+        prompt = engine.calls[-1]["prompt"]
+        assert "<|tool|>sunny<|end|>" in prompt and '"c1"' in prompt
+
+
+def test_tool_role_falls_back_when_the_template_rejects_it(engine):
+    engine.rejects_tool_role = True
+    app = create_app(settings=Settings(tool_history="template"), engine=engine)
+    with TestClient(app) as client:
+        response = chat(
+            client,
+            messages=[
+                {"role": "user", "content": "weather?"},
+                {"role": "tool", "content": "sunny", "name": "get_weather"},
+            ],
+        )
+        assert response.status_code == 200, response.text
+        assert "Tool result (get_weather)" in engine.calls[-1]["prompt"]
 
 
 def test_extras_can_be_disabled(engine):

@@ -111,6 +111,14 @@ class Settings:
     #: Seconds a single request may spend queued + generating before giving up.
     request_timeout: float = 600.0
 
+    #: How tool exchanges in the history reach a model that was never trained on
+    #: them. ``context``: assistant turns that only carry ``tool_calls`` are
+    #: dropped and each ``tool`` result becomes a user turn ("Tool result (name):
+    #: ..."), so the model sees retrieved material as plain context and answers
+    #: in prose. ``template``: pass the ``tool`` role and the serialized calls to
+    #: the chat template as-is, which makes MobileMoE imitate the JSON instead.
+    tool_history: str = "context"
+
     #: Include timings and warnings as an ``x_mobilemoe`` object on responses.
     expose_extras: bool = True
 
@@ -148,6 +156,7 @@ class Settings:
             default_repetition_penalty=_env_float("MOBILEMOE_DEFAULT_REPETITION_PENALTY", 1.0),
             max_queue_depth=_env_int("MOBILEMOE_MAX_QUEUE_DEPTH", 16) or 16,
             request_timeout=_env_float("MOBILEMOE_REQUEST_TIMEOUT", 600.0),
+            tool_history=(os.environ.get("MOBILEMOE_TOOL_HISTORY") or "context").lower(),
             expose_extras=_env_bool("MOBILEMOE_EXPOSE_EXTRAS", True),
             allowed_origins=[o.strip() for o in origins.split(",") if o.strip()],
         )

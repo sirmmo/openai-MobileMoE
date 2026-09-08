@@ -46,6 +46,7 @@ markedly slower than `float32`, which is why `auto` picks `float32` there.
 | `MOBILEMOE_API_KEY` | `--api-key` | unset | Require `Authorization: Bearer <key>` on `/v1/*`. |
 | `MOBILEMOE_MAX_QUEUE_DEPTH` | `--max-queue-depth` | `16` | Requests waiting for the generation thread before new ones get 429. |
 | `MOBILEMOE_REQUEST_TIMEOUT` | `--request-timeout` | `600` | Seconds a request may spend queued + generating. |
+| `MOBILEMOE_TOOL_HISTORY` | `--tool-history` | `context` | `context` renders tool exchanges as plain user-supplied context; `template` passes the `tool` role through. See [fidelity notes](fidelity.md#things-about-the-checkpoints). |
 | `MOBILEMOE_EXPOSE_EXTRAS` | `--no-extras` | `true` | Include `x_mobilemoe` on responses. |
 | `MOBILEMOE_ALLOWED_ORIGINS` | — | `*` | CORS origins, comma-separated. |
 | — | `--log-level` | `info` | uvicorn / application log level. |

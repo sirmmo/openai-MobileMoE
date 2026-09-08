@@ -316,6 +316,10 @@ def create_app(settings: Settings | None = None, engine: Any = None) -> FastAPI:
             )
             hint = translate.response_format_hint(body.response_format)
             messages = translate.with_system_hint(messages, hint)
+            if settings.tool_history == "context":
+                messages = translate.tool_history_as_context(messages)
+            else:
+                messages = translate.strip_markers(messages)
             prompt = render_chat_prompt(eng, messages)
             prompt_ids = eng.encode(prompt, rendered=True)
             params = prepare_params(payload, len(prompt_ids), eng)

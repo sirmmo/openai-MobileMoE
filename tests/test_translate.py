@@ -50,6 +50,27 @@ def test_assistant_tool_calls_are_kept_as_text():
     assert out[2] == {"role": "tool", "content": "sunny", "name": "get_weather"}
 
 
+def test_tool_history_as_context_drops_call_turns_and_relabels_results():
+    msgs = translate.normalize_messages(
+        [
+            {"role": "user", "content": "weather?"},
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{"id": "c1", "function": {"name": "w"}}],
+            },
+            {"role": "tool", "tool_call_id": "c1", "content": "sunny", "name": "w"},
+            {"role": "assistant", "content": "It is sunny.", "tool_calls": [{"id": "c2"}]},
+        ]
+    )
+    out = translate.tool_history_as_context(msgs)
+    assert [m["role"] for m in out] == ["user", "user", "assistant"]
+    assert out[1]["content"] == "Tool result (w):\nsunny"
+    assert out[2]["content"].startswith("It is sunny.")  # content-bearing turns survive
+    assert all(not k.startswith("_") for m in out for k in m)
+    assert all(not k.startswith("_") for m in translate.strip_markers(msgs) for k in m)
+
+
 def test_image_parts_are_rejected():
     with pytest.raises(TranslationError) as exc:
         translate.normalize_messages(

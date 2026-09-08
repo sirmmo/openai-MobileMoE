@@ -42,6 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-context", type=int, default=None, help="override the model's context window"
     )
     parser.add_argument(
+        "--tool-history",
+        choices=["context", "template"],
+        default=None,
+        help="render tool exchanges as plain context (default) or pass them to the template",
+    )
+    parser.add_argument(
         "--repetition-penalty",
         type=float,
         default=None,
@@ -91,6 +97,7 @@ def main(argv: list[str] | None = None) -> None:
         ("max_new_tokens", args.max_new_tokens),
         ("max_context", args.max_context),
         ("default_repetition_penalty", args.repetition_penalty),
+        ("tool_history", args.tool_history),
         ("max_queue_depth", args.max_queue_depth),
         ("request_timeout", args.request_timeout),
     ):

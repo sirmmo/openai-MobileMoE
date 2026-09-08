@@ -113,12 +113,16 @@ def normalize_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 param=f"messages[{index}].role",
             )
         text = _content_to_text(message.get("content"), index)
+        tool_calls_only = False
         if role == "assistant" and message.get("tool_calls"):
             calls = json.dumps(message["tool_calls"], separators=(",", ":"))
+            tool_calls_only = not text
             text = f"{text}\n{calls}".strip() if text else calls
         if role == "function":
             role = "tool"
         entry: dict[str, Any] = {"role": role, "content": text}
+        if tool_calls_only:
+            entry["_tool_calls_only"] = True
         if role == "tool" and message.get("name"):
             entry["name"] = str(message["name"])
         out.append(entry)
@@ -169,6 +173,33 @@ def with_system_hint(messages: list[dict[str, Any]], hint: str | None) -> list[d
             m["content"] = f"{m['content']}\n\n{hint}".strip()
             return out
     return [{"role": "system", "content": hint}, *out]
+
+
+def tool_history_as_context(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Render tool exchanges as plain context for a model with no tool training.
+
+    Assistant turns that only carried ``tool_calls`` (already serialized to JSON
+    by :func:`normalize_messages`) are dropped: shown that JSON as its own last
+    turn, MobileMoE imitates the format instead of answering. Each ``tool``
+    result becomes a user turn labelled with the tool name, so the retrieved
+    material reads as something the user supplied.
+    """
+    out: list[dict[str, Any]] = []
+    for m in messages:
+        if m["role"] == "assistant" and m.get("_tool_calls_only"):
+            continue
+        if m["role"] == "tool":
+            name = m.get("name")
+            label = f"Tool result ({name})" if name else "Tool result"
+            out.append({"role": "user", "content": f"{label}:\n{m['content']}"})
+            continue
+        out.append({"role": m["role"], "content": m["content"]})
+    return out
+
+
+def strip_markers(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop the private ``_tool_calls_only`` marker before a template sees the messages."""
+    return [{k: v for k, v in m.items() if not k.startswith("_")} for m in messages]
 
 
 def tool_messages_to_user(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
