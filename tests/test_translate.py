@@ -246,7 +246,8 @@ class CharTokenizer:
         self.vocab = vocab
         self.overrides = overrides or {}
 
-    def decode(self, ids, skip_special_tokens=True):
+    def decode(self, ids, skip_special_tokens=True, **kwargs):
+        self.last_kwargs = kwargs
         key = tuple(ids)
         if key in self.overrides:
             return self.overrides[key]
@@ -281,6 +282,15 @@ def test_decoder_cuts_at_stop_string():
     assert dec.text == "a"
     assert dec.stop_hit is True
     assert "".join(pieces) == "a"
+
+
+def test_decoder_disables_tokenizer_space_cleanup():
+    # Llama-3 style tokenizers default to clean_up_tokenization_spaces=True, which
+    # rewrites "SELECT ?s" as "SELECT?s". The decoder must opt out explicitly.
+    tokenizer = CharTokenizer(["a", "b"])
+    dec = IncrementalDecoder(tokenizer, None, None)
+    dec.push([0])
+    assert tokenizer.last_kwargs == {"clean_up_tokenization_spaces": False}
 
 
 def test_decoder_waits_for_complete_multibyte_char():

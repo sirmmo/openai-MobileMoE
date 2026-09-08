@@ -68,6 +68,11 @@ produced by another model still makes sense.
 after the chat template is applied, so the template's own tokens count
 against it.
 
+**Tokenizer space cleanup is off.** The checkpoint's tokenizer sets
+`clean_up_tokenization_spaces=true`, which would rewrite `SELECT ?s ?label` as
+`SELECT?s?label` and `x .` as `x.`. The server decodes with the cleanup
+disabled, so text comes back with the spacing the model actually produced.
+
 **Stop tokens.** Generation ends on any of the checkpoint's `eos_token_id`s
 plus `<|eot|>`, `<|eot_id|>`, `<|end_of_text|>` and `<|im_end|>` where those
 exist in the vocabulary. The terminating token is counted in

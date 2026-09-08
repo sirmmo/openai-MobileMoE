@@ -138,7 +138,12 @@ class IncrementalDecoder:
     def _decode(self, ids: list[int]) -> str:
         if not ids:
             return ""
-        return self._tokenizer.decode(ids, skip_special_tokens=True)
+        # clean_up_tokenization_spaces (on by default for the MobileMoE tokenizer)
+        # deletes the space before ? . , ! and turns `SELECT ?s` into `SELECT?s`,
+        # which silently corrupts code, SPARQL and anything punctuation-sensitive.
+        return self._tokenizer.decode(
+            ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )
 
     def _absorb(self, delta: str) -> None:
         self._pending += delta
