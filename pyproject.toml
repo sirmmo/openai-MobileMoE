@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openai-mobilemoe"
-version = "0.1.0"
+version = "0.1.1"
 description = "OpenAI-compatible HTTP API for Meta's MobileMoE on-device mixture-of-experts models"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,7 +41,9 @@ classifiers = [
 #     pip install openai-mobilemoe
 dependencies = [
     "torch>=2.1",
-    "transformers>=4.57",
+    # <5: Transformers 5 builds models on the meta device and MobileMoE's remote
+    # rotary-embedding code calls Tensor.item() in __init__, which fails there.
+    "transformers>=4.57,<5",
     "safetensors>=0.4",
     "accelerate>=1.0",
     "huggingface_hub>=0.23",

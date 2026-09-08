@@ -66,6 +66,27 @@ sizing a container.
 `docker-compose.yml` sets `mem_limit: 8g`, enough for S at `float32`. Raise it
 for M and L, or switch to `MOBILEMOE_DTYPE=bfloat16`.
 
+### Measured: M-QAT on an old CPU
+
+One data point, `facebook/MobileMoE-M-QAT` in the CPU container on two Xeon
+E5-2640 v4 (2016, AVX2 only, no AVX-512, no native bf16), `float32`,
+20 threads, otherwise idle:
+
+| | |
+| --- | --- |
+| Load + INT4 dequantisation | ~70 s |
+| Resident memory | 10.9 GiB |
+| Prefill | ~27 tok/s |
+| Decode | 2.6–4 tok/s |
+| Time to first streamed token (25-token prompt) | ~3 s |
+
+Decode is far slower than prefill because Meta's reference MoE layer loops over
+all 60 experts in Python for every token; on hardware this old that overhead
+dominates. Expect several times these numbers on a current desktop CPU, and
+tens of tokens per second on any CUDA GPU. Thread oversubscription hurts
+decode badly: on a loaded host, set `MOBILEMOE_THREADS` to the number of cores
+you can actually dedicate.
+
 ## Serving a converted checkpoint
 
 The model card shows how to export a QAT checkpoint to plain BF16 safetensors

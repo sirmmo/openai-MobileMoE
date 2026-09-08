@@ -6,6 +6,24 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-08
+
+First run against the real weights (`facebook/MobileMoE-M-QAT`, CPU).
+
+### Fixed
+
+- Pin `transformers>=4.57,<5`. Transformers 5 initialises models on the meta
+  device, and the rotary embedding in Meta's remote modeling code calls
+  `Tensor.item()` in `__init__`, so every MobileMoE checkpoint failed to load
+  with `Tensor.item() cannot be called on meta tensors`. The 0.1.0 wheel and
+  image resolved 5.x and could not serve the model they were built for.
+- The engine logs a clear warning when it finds transformers 5 with
+  `trust_remote_code` on.
+
+### Added
+
+- Measured CPU numbers for M-QAT in the configuration docs.
+
 ## [0.1.0] - 2026-09-07
 
 First release.

@@ -1,7 +1,10 @@
 # Runtime dependencies for the server. The Dockerfile installs torch from the
 # CPU wheel index before this file so the default image stays CPU-only.
 torch>=2.1
-transformers>=4.57
+# <5: Transformers 5 initialises models on the meta device, and the rotary
+# embedding in Meta's remote modeling code calls Tensor.item() during __init__,
+# which fails there ("Tensor.item() cannot be called on meta tensors").
+transformers>=4.57,<5
 safetensors>=0.4
 accelerate>=1.0
 huggingface_hub>=0.23

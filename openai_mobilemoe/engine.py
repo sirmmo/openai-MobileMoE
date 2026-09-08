@@ -234,9 +234,18 @@ class MobileMoEEngine:
     def start(self) -> None:
         """Download (if needed), load and warm up the model. Blocking."""
         import torch
+        import transformers
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         s = self.settings
+        major = int(transformers.__version__.split(".")[0])
+        if major >= 5 and s.trust_remote_code:
+            log.warning(
+                "transformers %s builds models on the meta device; MobileMoE's remote "
+                "code fails there (Tensor.item() in the rotary embedding). Install "
+                "'transformers>=4.57,<5'.",
+                transformers.__version__,
+            )
         if s.threads:
             torch.set_num_threads(s.threads)
         device = _resolve_device(s.device)

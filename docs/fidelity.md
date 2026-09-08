@@ -73,6 +73,12 @@ plus `<|eot|>`, `<|eot_id|>`, `<|end_of_text|>` and `<|im_end|>` where those
 exist in the vocabulary. The terminating token is counted in
 `completion_tokens` but never appears in `content`.
 
+**Transformers 5 cannot load the checkpoints.** Its `from_pretrained` builds
+the model on the meta device, and `MobileMoERotaryEmbedding.__init__` in the
+remote code compares tensor values with `.item()`, which raises
+`Tensor.item() cannot be called on meta tensors`. The package pins
+`transformers>=4.57,<5`; the engine warns if it finds a 5.x anyway.
+
 ## Things about the server
 
 **One request at a time.** Generation runs on a single thread; requests queue

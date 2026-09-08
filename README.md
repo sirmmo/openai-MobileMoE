@@ -139,6 +139,9 @@ A short version of the [fidelity notes](https://ingmmo.com/openai-MobileMoE/fide
   running more containers.
 - **`logprobs`, `logit_bias`, `presence_penalty` and `frequency_penalty`** are
   accepted and ignored, with a warning.
+- **Transformers 4.57 to 4.x only.** Transformers 5 builds models on the meta
+  device and Meta's remote rotary-embedding code fails there; the package pins
+  `transformers<5` until the upstream repo is updated.
 - **Noncommercial.** Read Meta's license before deploying.
 
 ## Development
