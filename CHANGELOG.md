@@ -6,6 +6,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-08
+
+### Fixed
+
+- Decode with `clean_up_tokenization_spaces=False`. The MobileMoE tokenizer
+  enables the cleanup by default, which deletes the space before `?`, `.`, `,`
+  and `!`, so `SELECT ?s ?label` came back as `SELECT?s?label`. Found while
+  replaying a text-to-SPARQL loop; it corrupts any code-like output.
+
 ## [0.1.1] - 2026-09-08
 
 First run against the real weights (`facebook/MobileMoE-M-QAT`, CPU).
@@ -19,10 +28,6 @@ First run against the real weights (`facebook/MobileMoE-M-QAT`, CPU).
   image resolved 5.x and could not serve the model they were built for.
 - The engine logs a clear warning when it finds transformers 5 with
   `trust_remote_code` on.
-- Decode with `clean_up_tokenization_spaces=False`. The MobileMoE tokenizer
-  enables the cleanup by default, which deletes the space before `?`, `.`, `,`
-  and `!`, so `SELECT ?s ?label` came back as `SELECT?s?label`. Found while
-  replaying a text-to-SPARQL loop; it corrupts any code-like output.
 
 ### Added
 
