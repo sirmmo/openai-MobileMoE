@@ -4,7 +4,7 @@
 # torch is pulled from the CPU wheel index before requirements.txt so the
 # resolver does not drag in the CUDA build (several GB of NVIDIA libraries the
 # image would never use). Multi-arch: the CPU index ships aarch64 wheels too.
-FROM python:3.12-slim AS cpu
+FROM python:3.14-slim AS cpu
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
